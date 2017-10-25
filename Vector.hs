@@ -41,8 +41,15 @@ vdot = (sum .) . liftA2 (*)
 vlen :: Vector -> Double
 vlen v = sqrt $ v `vdot` v
 
+vcross :: Vector -> Vector -> Vector
+(Vec x y z) `vcross` (Vec x' y' z') =
+    Vec (y * z' - z * y') (z * x' - x * z') (x * y' - y * x')
+
 vcos :: Vector -> Vector -> Double
 vcos u v = (u `vdot` v) / (vlen u * vlen v)
+
+vsin :: Vector -> Vector -> Double
+vsin u v = vlen (u `vcross` v) / (vlen u * vlen v)
 
 vnormal :: Vector -> Vector
 vnormal v = v `vscale` (1 / vlen v)
@@ -62,6 +69,5 @@ toBasis basis@(v1@(Vec a b c), v2@(Vec d e f), v3@(Vec g h i)) v =
     d2 = determenant (v1, v, v3)
     d3 = determenant (v1, v2, v)
 
-vcross :: Vector -> Vector -> Vector
-(Vec x y z) `vcross` (Vec x' y' z') =
-    Vec (y * z' - z * y') (z * x' - x * z') (x * y' - y * x')
+vreflect :: Vector -> Vector -> Vector
+vreflect v n = pure (2 * (v `vdot` n)) * n - v
