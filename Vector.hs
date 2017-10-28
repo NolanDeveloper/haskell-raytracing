@@ -30,6 +30,10 @@ instance Num a => Num (GenericVector a) where
     fromInteger x = fromInteger <$> Vec x x x
     negate x = negate <$> x
 
+instance (Fractional a) => Fractional (GenericVector a) where
+    fromRational x = fromRational <$> Vec x x x
+    (/) = liftA2 $ (/)
+
 vscale :: Vector -> Double -> Vector
 vscale u f = (f *) <$> u
 

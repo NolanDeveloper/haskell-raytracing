@@ -21,22 +21,22 @@ data Material
     , matShininess       :: Double
     }
 
-rabber :: Color -> Material
-rabber c = Material ks kd ka kr s
+rubberMaterial :: Color -> Material
+rubberMaterial c = Material ks kd ka kr s
   where
-    ks = c * pure 0.7
-    kd = c * pure 0.5
-    ka = c * pure 0.5
-    kr = c * pure 0.05
-    s = 80
+    ks = c * 0.6
+    kd = c * 0.6
+    ka = c * 0.6
+    kr = c * 0.05
+    s = 50
 
-plastic :: Color -> Material
-plastic c = Material ks kd ka kr s
+plasticMaterial :: Color -> Material
+plasticMaterial c = Material ks kd ka kr s
   where
-    ks = c * pure 0.1
-    kd = c * pure 0.5
-    ka = c * pure 0.5
-    kr = c * pure 0.5
+    ks = c * 0.8
+    kd = c * 0.2
+    ka = c * 0.2
+    kr = c * 1
     s = 280
 
 data Ray
@@ -71,9 +71,10 @@ solveQuadraticEquation a b c
 instance SceneObject Sphere where
     cast (Ray x0 d) (Sphere xc r _)
         | null positiveTs = Nothing
-        | otherwise       = Just $ xn $ head positiveTs
+        | otherwise       = Just xn'
       where
         positiveTs = sort $ filter (0.001 <) ts
+        xn' = xn $ head positiveTs
         xn t = (x', n')
           where
             x' = x0 + (d * pure t)
@@ -152,9 +153,11 @@ objects =
     plane g h d c blue ++
     plane d h e a purple ++
     plane b f g c purple ++
-    [ sphere (Vec (-6) (-6) (-16)) 4 pwhite
-    , sphere (Vec 0 (-6) (-12)) 2 rwhite
-    , sphere (Vec (-3) (-7) (-10)) 1 rwhite
+    plane e f g h purple ++
+    [ sphere (Vec (-5) (-6) (-16)) 4 pwhite
+    , sphere (Vec 5 (-5) (-16)) 5 pwhite
+    , sphere (Vec 0 (-8) (-12)) 2 gold
+    , sphere (Vec (-4) (-8.5) (-11)) 1.5 silver
     ]
   where
     a = Vec 10 10 (-20)
@@ -162,32 +165,31 @@ objects =
     c = Vec (-10) (-10) (-20)
     d = Vec (-10) 10 (-20)
     [e, f, g, h] = map (\(Vec x y z) -> Vec x y (-z)) [a, b, c, d]
-    red    = rabber $ Color 0.8 0.4 0.4
-    green  = rabber $ Color 0.4 0.8 0.4
-    blue   = rabber $ Color 0.4 0.4 0.8
-    purple = rabber $ Color 0.4 0.8 0.8
-    rwhite = rabber $ Color 0.8 0.8 0.8
-    pwhite = plastic $ Color 0.8 0.8 0.8
+    red    = rubberMaterial  $ Color 0.9 0.3 0.3
+    green  = plasticMaterial $ Color 0.3 0.9 0.3
+    blue   = plasticMaterial $ Color 0.3 0.3 0.9
+    purple = rubberMaterial  $ Color 0.3 0.9 0.9
+    gold   = plasticMaterial $ Color 0.9 0.9 0.3
+    silver = plasticMaterial $ Color 0.9 0.9 0.9
+    pwhite = rubberMaterial  $ Color 0.9 0.9 0.9
 
 lightSources =
-    map (\(LightSource p c) -> LightSource p (pure 0.5 * c))
+    map (\(LightSource p c) -> LightSource p (0.5 * c))
         [ LightSource (Vec 8 8 (-10)) (Color 1 1 1)
-        --, LightSource (Vec (-9) (-9) (-13)) (Color 1 (0.5 * 1) 0)
-        --, LightSource (Vec (-2 + 3) (-2) (-12)) (Color 1 0 0)
-        --, LightSource (Vec (-2) (-2 + 3) (-12)) (Color 0 1 0)
-        --, LightSource (Vec (-2) (-2) (-12 + 3)) (Color 0 0 1)
+        , LightSource (Vec (-9) (-9) (-13)) (Color 1 (0.5 * 1) 0)
+        , LightSource (Vec (-2 + 3) (-2) (-12)) (Color 1 0 0)
+        , LightSource (Vec (-2) (-2 + 3) (-12)) (Color 0 1 0)
+        , LightSource (Vec (-2) (-2) (-12 + 3)) (Color 0 0 1)
+        , LightSource (Vec 9 (-9) (-17)) (Color 0 0 1)
         ]
 
-distanceToCamera :: Camera -> Vector -> Double
-distanceToCamera c p = vlen (p - camPosition c)
-
 traceRay :: Int -> Ray -> Color
-traceRay 0 _ = pure 0
+traceRay 0 _ = 0
 traceRay depth ray =
     case [ (s, p, n) | s <- objects, Just (p, n) <- [ cast ray s ] ] of
-        []   -> pure 0
+        []   -> 0
         list ->
-            let z = comparing (\(_, p, _) -> distanceToCamera camera p)
+            let z = comparing (\(_, p, _) -> vlen (p - raySource ray))
                 (s, p, n) = minimumBy z list
             in illumination (material s) p n
   where
@@ -213,5 +215,5 @@ traceRay depth ray =
             ray' = Ray fragmentPosition (vreflect (-direction) n)
 
 
-tracePixel :: Double -> Double -> (Int, Int, Int)
-tracePixel x y = toGuiColor $ traceRay 2 (getRay camera x y)
+tracePixel :: Double -> Double -> Color
+tracePixel x y = traceRay 6 (getRay camera x y)

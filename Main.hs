@@ -1,39 +1,33 @@
 module Main (main) where
 
 import Control.Monad
-
-import qualified Graphics.UI.Gtk as Gtk
-import qualified Graphics.UI.Gtk.Gdk.GC as GC
-import Graphics.UI.Gtk (AttrOp((:=)))
+import Control.Parallel
+import System.Environment
+import Text.Read
 
 import Raytracer
+import Color
+
+import Graphics.Image
+
+render :: (Int, Int) -> Image VU RGB Double
+render size@(width, height) = makeImageR VU size generator
+  where
+    generator (row, col) = PixelRGB r g b
+      where
+        fx = fromIntegral col / fromIntegral width
+        fy = fromIntegral row / fromIntegral height
+        Color r g b = tracePixel fx fy
 
 main :: IO ()
 main = do
-  Gtk.initGUI
-  window <- Gtk.windowNew
-  Gtk.onDestroy window Gtk.mainQuit
-  Gtk.set window [ Gtk.windowTitle := "Raytraing" ]
-  vbox <- Gtk.vBoxNew False 4
-  Gtk.set window [ Gtk.containerChild := vbox ]
-  canvas <- Gtk.drawingAreaNew
-  Gtk.widgetSetSizeRequest canvas 600 600
-  Gtk.onExpose canvas $ \_ -> do
-    d <- Gtk.widgetGetDrawWindow canvas
-    gc <- GC.gcNew d
-    (w, h) <- Gtk.widgetGetSize canvas
-    forM_ [0..h - 1] $ \y ->
-      forM_ [0..w - 1] $ \x -> do
-        gcValues <- GC.gcGetValues gc
-        let fx = fromIntegral x / (fromIntegral w - 1)
-        let fy = fromIntegral y / (fromIntegral h - 1)
-        let (r, g, b) = tracePixel fx fy
-        let color = GC.Color (fromIntegral r) (fromIntegral g) (fromIntegral b)
-        let gcValues' = gcValues { GC.foreground = color }
-        GC.gcSetValues gc gcValues'
-        Gtk.drawPoint d gc (x, y)
-    return True
-  Gtk.set vbox [ Gtk.containerChild := canvas ]
-  Gtk.widgetShowAll window
-  Gtk.mainGUI
-
+    args <- getArgs
+    case args of
+        [width', height', filename]
+            | Just width <- readMaybe width'
+            , Just height <- readMaybe height' ->
+                let image = render (width, height)
+                in writeImage filename image
+        _ -> do
+            prog <- getProgName
+            putStrLn $ "Usage: " ++ prog ++ " 640 480 filename.png"
