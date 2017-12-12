@@ -88,6 +88,25 @@ plane a b c d m =
     , Triangle a d c m
     ]
 
+cube :: Vector -> Double -> Material -> [SceneObject]
+cube position size material =
+    plane a d c b material ++
+    plane e a b f material ++
+    plane g c d h material ++
+    plane d a e h material ++
+    plane b c g f material ++
+    plane e h g f material
+  where
+    s = pure $ size / 2
+    a = position + s * Vec  1  1 -1
+    b = position + s * Vec  1 -1 -1
+    c = position + s * Vec -1 -1 -1
+    d = position + s * Vec -1  1 -1
+    e = position + s * Vec  1  1  1
+    f = position + s * Vec  1 -1  1
+    g = position + s * Vec -1 -1  1
+    h = position + s * Vec -1  1  1
+
 objects =
     plane a b c d red ++
     plane e f b a green ++
@@ -95,10 +114,11 @@ objects =
     plane d h e a purple ++
     plane b f g c purple ++
     plane e f g h purple ++
-    [ Sphere (Vec -5 -6 -16) 4 pwhite
-    , Sphere (Vec 5 -5 -16) 5 pwhite
-    , Sphere (Vec 0 -8 -12) 2 gold
-    , Sphere (Vec -4 -8.5 -11) 1.5 silver
+    cube (Vec -4.5 -6.5 -13) 4 gold ++
+    [ {- Sphere (Vec -5 -6 -16) 4 pwhite
+    , -} Sphere (Vec 5 -5 -16) 5 silver
+    , Sphere (Vec 0 -8 -12) 2 red
+    , Sphere (Vec -4 -8.5 -11) 1.5 pwhite
     ]
   where
     a = Vec 10 10 -20

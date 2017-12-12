@@ -26,6 +26,6 @@ plastic c = Material ks kd ka kr s
     ks = c * 0.8
     kd = c * 0.2
     ka = c * 0.2
-    kr = c * 1
+    kr = c * 0.8
     s = 280
 
