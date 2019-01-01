@@ -1,18 +1,9 @@
 module Material where
 
-import Color
+import Types
 
-data Material
-    = Material
-    { matSpecular  :: Color
-    , matDiffuse   :: Color
-    , matAmbient   :: Color
-    , matReflected :: Color
-    , matShininess :: Double
-    }
-
-rubber  :: Color -> Material
-rubber  c = Material ks kd ka kr s
+rubber :: Color -> Material
+rubber c = Material ks kd ka kr s
   where
     ks = c * 0.6
     kd = c * 0.6
@@ -28,4 +19,3 @@ plastic c = Material ks kd ka kr s
     ka = c * 0.2
     kr = c * 0.8
     s = 280
-

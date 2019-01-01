@@ -1,0 +1,31 @@
+name:               haskell-raytracing
+version:            0.1.0.0
+license:            BSD3
+author:             Nolan
+maintainer:         Nolane16@gmail.com
+
+ghc-options: 
+- "-Wall"
+- "-Werror"
+
+dependencies:    
+- base
+- linear
+
+internal-libraries:
+  raytracing-internal:
+    source-dirs:      lib
+    dependencies:
+    - yaml
+    - containers
+
+executables: 
+  render:
+    main:           Main.hs
+    source-dirs:    app
+    dependencies:    
+    - raytracing-internal
+    - JuicyPixels
+    ghc-options:
+    - "-threaded"
+
