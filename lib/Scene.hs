@@ -1,5 +1,15 @@
 module Scene where
 
+import Types
+
+cast :: SceneObject -> Ray -> Maybe (Position, Direction)
+cast (Triangle triangle) = castTriangle triangle
+cast (Sphere sphere) = castSphere sphere
+
+material :: SceneObject -> Material
+material (Triangle (MkTriangle _ _ _ m)) = m
+material (Sphere (MkSphere _ _ m)) = m
+
 -- import Data.Sequence(Seq, (|>))
 -- import Linear
 -- 

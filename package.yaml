@@ -28,4 +28,3 @@ executables:
     - JuicyPixels
     ghc-options:
     - "-threaded"
-

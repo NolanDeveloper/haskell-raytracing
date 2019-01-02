@@ -40,7 +40,7 @@ render camera scene width height = generateImage generator width height
         m = fromIntegral (maxBound :: Pixel8)
         fx = fromIntegral col / fromIntegral width
         fy = fromIntegral row / fromIntegral height
-        Color r g b = (\c -> round $ m * c) <$> tracePixel camera scene fx fy
+        V3 r g b = (\c -> round $ m * c) <$> tracePixel camera scene fx fy
 
 plane :: Position -> Position -> Position -> Position -> Material -> [SceneObject]
 plane a b c d m = map Triangle [MkTriangle a c b m, MkTriangle a d c m]
@@ -85,22 +85,22 @@ objects =
     c = V3 -10 -10 -20
     d = V3 -10 10 -20
     [e, f, g, h] = map (\(V3 x y z) -> V3 x y (-z)) [a, b, c, d]
-    red    = rubber $ Color 0.9 0.3 0.3
-    green  = plastic $ Color 0.3 0.9 0.3
-    blue   = plastic $ Color 0.3 0.3 0.9
-    purple = rubber $ Color 0.3 0.9 0.9
-    gold   = plastic $ Color 0.9 0.9 0.3
-    silver = plastic $ Color 0.9 0.9 0.9
-    pwhite = rubber $ Color 0.9 0.9 0.9
+    red    = rubber $ mkColor 0.9 0.3 0.3
+    green  = plastic $ mkColor 0.3 0.9 0.3
+    blue   = plastic $ mkColor 0.3 0.3 0.9
+    purple = rubber $ mkColor 0.3 0.9 0.9
+    gold   = plastic $ mkColor 0.9 0.9 0.3
+    silver = plastic $ mkColor 0.9 0.9 0.9
+    pwhite = rubber $ mkColor 0.9 0.9 0.9
 
 defaultLightSources :: [LightSource]
 defaultLightSources =
-    [ LightSource (V3 8 8 -10) (Color 0.5 0.5 0.5)
-    , LightSource (V3 -9 -9 -13) (Color 0.5 0.25 0)
-    , LightSource (V3 1 -2 -12) (Color 0.5 0 0)
-    , LightSource (V3 -2 1 -12) (Color 0 0.5 0)
-    , LightSource (V3 -2 -2 -9) (Color 0 0 0.5)
-    , LightSource (V3 9 -9 -17) (Color 0 0 0.5)
+    [ LightSource (V3 8 8 -10) (mkColor 0.5 0.5 0.5)
+    , LightSource (V3 -9 -9 -13) (mkColor 0.5 0.25 0)
+    , LightSource (V3 1 -2 -12) (mkColor 0.5 0 0)
+    , LightSource (V3 -2 1 -12) (mkColor 0 0.5 0)
+    , LightSource (V3 -2 -2 -9) (mkColor 0 0 0.5)
+    , LightSource (V3 9 -9 -17) (mkColor 0 0 0.5)
     ]
 
 defaultCamera :: Camera

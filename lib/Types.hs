@@ -3,36 +3,16 @@
 module Types where
 
 import Data.List
-import Control.Applicative
 import GHC.Generics
 import Data.Function
 
 import Linear
 
-data GenericColor a = Color a a a
-    deriving (Eq, Show)
+type Color = V3 Double
 
-type Color = GenericColor Double
+mkColor :: Double -> Double -> Double -> Color
+mkColor = V3
 
-instance Functor GenericColor where
-    fmap f (Color r g b) = Color (f r) (f g) (f b)
-
-instance Applicative GenericColor where
-    pure x = Color x x x
-    (Color f g h) <*> (Color x y z) = Color (f x) (g y) (h z)
-
-instance (Ord a, Num a) => Num (GenericColor a) where
-    (+) = liftA2 $ ((max 0 . min 1) .) . (+)
-    (*) = liftA2 $ ((max 0 . min 1) .) . (*)
-    abs x = abs <$> x
-    signum x = signum <$> x
-    fromInteger x = fromInteger <$> Color x x x
-    negate x = negate <$> x
-
-instance (Ord a, Fractional a) => Fractional (GenericColor a) where
-    fromRational x = fromRational <$> Color x x x
-    (/) = liftA2 $ ((max 0 . min 1) .) . (/)
-    
 data Material
     = Material
     { materialSpecular  :: Color
@@ -67,7 +47,7 @@ data Triangle =
     }
 
 solveQuadratic :: (Eq a, Ord a, Floating a) => a -> a -> a -> [a]
-solveQuadratic a b c = map (\rootD -> -b + rootD) roots
+solveQuadratic a b c = map (\rootD -> (-b + rootD) / (2 * a)) roots
   where
     d = b * b - 4 * a * c
     roots
@@ -106,15 +86,8 @@ castTriangle (MkTriangle v0 v1 v2 _) (Ray o d)
 
 data SceneObject 
     = Triangle Triangle
-    | Sphere Sphere
-
-cast :: SceneObject -> Ray -> Maybe (Position, Direction)
-cast (Triangle triangle) = castTriangle triangle
-cast (Sphere sphere) = castSphere sphere
-
-material :: SceneObject -> Material
-material (Triangle (MkTriangle _ _ _ m)) = m
-material (Sphere (MkSphere _ _ m)) = m
+    | Sphere Sphere 
+    deriving Generic
 
 data LightSource = 
     LightSource 

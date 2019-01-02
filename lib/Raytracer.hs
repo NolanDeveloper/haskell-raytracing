@@ -2,13 +2,17 @@ module Raytracer(tracePixel) where
 
 import Data.List
 import Data.Ord
+import Control.Applicative
 
 import Types
+import Scene
 
 import Linear
 
-reflect :: V3 Double -> V3 Double -> V3 Double
-reflect v n = (2 * (v `dot` n)) *^ n - v
+infixl 6 %+%
+
+(%+%) :: Color -> Color -> Color
+(%+%) = liftA2 $ ((min 1 . max 0) .) . (+)
 
 traceRay :: Scene -> Int -> Ray -> Color
 traceRay _ 0 _ = 0
@@ -22,15 +26,14 @@ traceRay scene@(Scene objects lightSources) depth ray@(Ray src dir) =
   where
     {- https://en.wikipedia.org/wiki/Phong_reflection_model -}
     illumination (Material ks kd ka kr alpha) fragmentPosition n =
-        ka + kr * reflected + sum
-            [ (kd * pure (lm `dot` n) +
-              ks * pure ((hm `dot` n) ** alpha)) * i
+        ka %+% kr * reflected %+% sum
+            [ (kd ^* (lm `dot` n) %+% ks ^* ((hm `dot` n) ** alpha)) * i
             | LightSource lightPosition c <- lightSources
             , let lm = normalize (lightPosition - fragmentPosition)
             , all (not . intersects fragmentPosition lightPosition)
                   [cast object (Ray fragmentPosition lm) | object <- objects]
             , let hm = normalize (lm - dir)
-            , let i = c * pure (10 / norm (lightPosition - fragmentPosition))
+            , let i = c ^* (10 / norm (lightPosition - fragmentPosition))
             ]
       where
         intersects _ _ Nothing = False
@@ -38,7 +41,8 @@ traceRay scene@(Scene objects lightSources) depth ray@(Ray src dir) =
             norm (p - fragment) < norm (light - fragment)
         reflected = traceRay scene (depth - 1) ray'
           where
-            ray' = Ray fragmentPosition (reflect (-dir) n)
+            v = (2 * (-dir `dot` n)) *^ n + dir
+            ray' = Ray fragmentPosition v
 
 tracePixel :: Camera -> Scene -> Double -> Double -> Color
 tracePixel camera scene x y = traceRay scene 3 ray
