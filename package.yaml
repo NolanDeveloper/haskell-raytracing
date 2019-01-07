@@ -18,6 +18,9 @@ internal-libraries:
     dependencies:
     - yaml
     - containers
+    - text
+    - attoparsec
+    - mtl
 
 executables: 
   render:

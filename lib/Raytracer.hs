@@ -5,7 +5,6 @@ import Data.Ord
 import Control.Applicative
 
 import Types
-import Scene
 
 import Linear
 

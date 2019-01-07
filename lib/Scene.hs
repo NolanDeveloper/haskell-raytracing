@@ -1,75 +1,93 @@
-module Scene where
+{-# LANGUAGE OverloadedStrings #-} 
+{-# LANGUAGE NegativeLiterals #-}
 
-import Types
+module Scene 
+    ( parseSceneFromFile, parseScene
+    ) where
 
-cast :: SceneObject -> Ray -> Maybe (Position, Direction)
-cast (Triangle triangle) = castTriangle triangle
-cast (Sphere sphere) = castSphere sphere
+import Control.Monad.Except             ( throwError )
+import Control.Monad.State              ( StateT, MonadState(..), execStateT )
+import Control.Monad                    ( mapM_, when )
+import Data.Maybe                       ( isNothing )
+import Data.Sequence                    ( Seq, (|>), (!?), empty )
+import Data.Text                        ( Text )
+import Data.Text.IO                     ( readFile )
+import Linear                           ( V3(..) )
+import Prelude                   hiding ( readFile )
+import SceneFile                        ( SceneFile, Item(..), parseSceneFile )
+import Types                     hiding ( material, sceneObjects )
 
-material :: SceneObject -> Material
-material (Triangle (MkTriangle _ _ _ m)) = m
-material (Sphere (MkSphere _ _ m)) = m
+type SceneState = 
+    ( Seq Position
+    , Seq Color
+    , Seq Material
+    , [SceneObject]
+    , [LightSource]
+    , Maybe Camera)
 
--- import Data.Sequence(Seq, (|>))
--- import Linear
--- 
--- readSceneFromFile :: FilePath -> IO (Either String Scene)
--- readSceneFromFile path = readScene <$> readFile path
--- 
--- readScene :: String -> IO (Either String Scene)
--- readScene text = do
---     map readCommand (lines text)
--- 
--- data ParserState 
---     = PS 
---     { vertices :: Seq Position
---     , colors :: Seq Color
---     , materials :: Seq Material
---     , objects :: Seq SceneObject
---     , lights :: Seq LightSource
---     , camera :: Maybe Camera
---     }
--- 
--- type ParserAction a = ExceptT String (StateT PS IO) a
--- 
--- execCommand :: String -> ParserAction ()
--- execCommand text = do
---     s@ParserState{..} <- get
---     case words text of
---       ("v":x:y:z) -> do
---         let [x', y', z'] = map readMaybe [x, y, z]
---             error = throwError "Can't parse vertex"
---         newVertex <- maybe error pure (V3 <$> x' <*> y' <*> z')
---         lift $ put (s { vertices = vertices |> newVertex })
---       ("c":r:g:b) -> 
---         put (s { colors = colors |> V3 (readMaybe r) (readMaybe g) (readMaybe b) })
---       ("material":s:d:a:r:shine) -> do
---         let specular = colors ?! read s
---             diffuse = colors ?! read d
---             ambient = colors ?! read a
---             reflected = colors ?! read r
---             shininess = read shine
---             newMaterial = Material specular diffuse ambient reflected shininess
---         in put (s { materials = materials |> newMaterial |> 
---       ("sphere":c:r:m) ->
---       ("triangle":a:b:c:m) ->
---       ("light":p:c) ->
---       ("camera":p:d:u) ->
---       _ ->
---   where
---     readCommand' ("v":x:y:z) = 
---     readCommand' ("c":r:g:b) = 
---     readCommand' ("material":s:d:a:r:shine) = 
---     readCommand' ("sphere":c:r:m) = 
---     readCommand' ("triangle":a:b:c:m) = 
---     readCommand' ("light":p:c) = 
---     readCommand' ("camera":p:d:u) = 
---     readCommand' _ = 
+initialState :: SceneState
+initialState = (empty, empty, empty, [], [], Nothing)
 
--- vertex:      v 0.42 0.42 0.42
--- color:       c 0.42 0.42 0.42
--- material:    material 3 3 3 3 0.42
--- sphere:      sphere 3 0.42 0
--- triangle:    triangle 3 3 3 0
--- light:       light 0 0
--- camera:      camera 3 3 3
+parseScene :: Text -> Either String Scene
+parseScene text = do
+    sceneFile <- parseSceneFile text
+    let finalState = execStateT (processSceneFile sceneFile) initialState 
+    (_, _, _, sceneObjects, lightSources, camera) <- finalState -- ToDo: use camera here
+    when (isNothing camera) (throwError "No camera defined")
+    pure (Scene sceneObjects lightSources)
+
+parseSceneFromFile :: FilePath -> IO (Either String Scene)
+parseSceneFromFile path = parseScene <$> readFile path
+
+defaultCamera :: Camera
+defaultCamera = Camera
+    { cameraPosition   = V3 -0.001 0.01 0.01
+    , cameraTopLeft    = V3 -0.5  0.5 -0.5
+    , cameraTopRight   = V3  0.5  0.5 -0.5
+    , cameraBottomLeft = V3 -0.5 -0.5 -0.5
+    }
+
+processSceneFile :: SceneFile -> StateT SceneState (Either String) ()
+processSceneFile = mapM_ $ \item -> do
+    let handleError = maybe (throwError "Bad index") pure
+    (vertices, colors, materials, objects, lightSources, camera) <- get
+    case item of 
+        ItemVertex x y z 
+            -> put (vertices |> V3 x y z, colors, materials, objects, lightSources, camera)
+        ItemColor r g b 
+            -> put (vertices, colors |> V3 r g b, materials, objects, lightSources, camera)
+        ItemMaterial nAmbient nDiffuse nSpecular nReflected shininess -> do
+            ambient <- handleError (colors !? nAmbient)
+            diffuse <- handleError (colors !? nDiffuse)
+            specular <- handleError (colors !? nSpecular)
+            reflected <- handleError (colors !? nReflected)
+            let newMaterial = Material ambient diffuse specular reflected shininess
+            put (vertices, colors, materials |> newMaterial, objects, lightSources, camera)
+        ItemSphere nPosition radius nMaterial -> do
+            position <- handleError (vertices !? nPosition)
+            material <- handleError (materials !? nMaterial)
+            let newSceneObject = Sphere $ MkSphere position radius material
+            put (vertices, colors, materials, newSceneObject : objects, lightSources, camera)
+        ItemTriangle nA nB nC nMaterial -> do
+            a <- handleError (vertices !? nA)
+            b <- handleError (vertices !? nB)
+            c <- handleError (vertices !? nC)
+            material <- handleError (materials !? nMaterial)
+            let newSceneObject = Triangle $ MkTriangle a b c material
+            put (vertices, colors, materials, newSceneObject : objects, lightSources, camera)
+        ItemLightSource nPosition nColor -> do
+            position <- handleError (vertices !? nPosition)
+            color <- handleError (colors !? nColor)
+            let newLightSource = LightSource position color
+            put (vertices, colors, materials, objects, newLightSource : lightSources, camera)
+        ItemCamera nPosition nLookAt nUp -> do
+            position <- handleError (vertices !? nPosition)
+            lookAt <- handleError (vertices !? nLookAt)
+            up <- handleError (vertices !? nUp)
+            let newCamera = 
+                    if True 
+                        then Just defaultCamera 
+                        else undefined position lookAt up  -- ToDo: create sane camera
+            case camera of
+                Nothing -> put (vertices, colors, materials, objects, lightSources, newCamera)
+                Just _ -> throwError "Camera defined many times"
