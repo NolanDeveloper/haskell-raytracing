@@ -6,7 +6,7 @@ maintainer:         Nolane16@gmail.com
 
 ghc-options: 
 - "-Wall"
-- "-Werror"
+- "-funbox-strict-fields"
 
 dependencies:    
 - base
@@ -21,6 +21,10 @@ internal-libraries:
     - text
     - attoparsec
     - mtl
+    - array
+    build-tools:
+    - alex
+    - happy
 
 executables: 
   render:

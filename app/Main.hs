@@ -5,6 +5,7 @@ module Main (main) where
 
 import System.Environment
 import Text.Read
+import Control.Monad
 
 import Raytracer
 import Types
@@ -12,6 +13,8 @@ import Scene
 
 import Linear
 import Codec.Picture
+
+import SceneLexer
 
 data Arguments 
     = Arguments
@@ -115,7 +118,10 @@ defaultCamera = Camera
 main :: IO ()
 main = do
     Arguments{..} <- parseArguments
-    scene <- either error id <$> parseSceneFromFile sceneFile
-    --let scene = Scene objects defaultLightSources 
-    let image = render defaultCamera scene width height
-    writePng outputFile image
+    content <- readFile sceneFile
+    let Right tokens = tokenize content
+    forM_ tokens $ \t -> print t
+    --scene <- either error id <$> parseSceneFromFile sceneFile
+    ----let scene = Scene objects defaultLightSources 
+    --let image = render defaultCamera scene width height
+    --writePng outputFile image
