@@ -15,6 +15,7 @@ import Linear
 import Codec.Picture
 
 import SceneLexer
+import SceneParser
 
 data Arguments 
     = Arguments
@@ -120,7 +121,7 @@ main = do
     Arguments{..} <- parseArguments
     content <- readFile sceneFile
     let Right tokens = tokenize content
-    forM_ tokens $ \t -> print t
+    forM_ (parse tokens) print
     --scene <- either error id <$> parseSceneFromFile sceneFile
     ----let scene = Scene objects defaultLightSources 
     --let image = render defaultCamera scene width height

@@ -11,10 +11,11 @@ $sign  = [\+\-]
 $digit = [0-9]
 $alpha = [a-zA-Z]
 $idSym = [a-zA-Z0-9\_\']
+$noNewLine = ~ \n
 
 tokens :-
     $white+                         ;
-    \#.*                            ;
+    \# .*                           ;
     vertex                          { fromMatch (const TokenVertex) }
     vertices                        { fromMatch (const TokenVertices) }
     colors                          { fromMatch (const TokenColors) }

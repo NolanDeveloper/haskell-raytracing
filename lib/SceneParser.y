@@ -2,6 +2,7 @@
 module SceneParser (parse) where
 
 import SceneLexer
+import Data.List
 }
 
 %tokentype { Token }
@@ -25,7 +26,7 @@ import SceneLexer
 %%
 
 Start :: { [Block] }
-    : Blocks eof                    { $1 }
+    : Blocks eof                    { reverse $1 }
 
 Blocks :: { [Block] }
     : Blocks Block                  { $2 : $1 }
@@ -34,16 +35,16 @@ Blocks :: { [Block] }
 Block :: { Block }
     : Vertices                      { Vertices $1 }
     | Colors                        { Colors $1 }
-    | Materials                     { undefined }
-    | Shapes                        { undefined }
-    | Light                         { undefined }
-    | Camera                        { undefined }
+    | Materials                     { Materials $1 }
+    | Shapes                        { Shapes $1 }
+    | Light                         { Light $1 }
+    | Camera                        { Camera $1 }
 
 Vertices :: { [Vertex] }
-    : vertices NamedVectors         { map (\(a, b, c, d) -> MkVertex a b c d) $2 }
+    : vertices NamedVectors         { map (\(a, b, c, d) -> MkVertex a b c d) (reverse $2) }
 
 Colors :: { [Color] }
-    : colors NamedVectors           { map (\(a, b, c, d) -> MkColor a b c d) $2 }
+    : colors NamedVectors           { map (\(a, b, c, d) -> MkColor a b c d) (reverse $2) }
 
 NamedVectors :: { [(String, Double, Double, Double)] }
     : NamedVectors NamedVector      { $2 : $1 }
@@ -57,7 +58,7 @@ NamedVector :: { (String, Double, Double, Double) }
     : id FloatOrInt FloatOrInt FloatOrInt { ($1, $2, $3, $4) }
 
 Materials :: { [Material] }
-    : materials NamedMaterials      { $2 }
+    : materials NamedMaterials      { reverse $2 }
 
 NamedMaterials :: { [Material] }
     : NamedMaterials NamedMaterial  { $2 : $1 }
@@ -67,20 +68,24 @@ NamedMaterial :: { Material }
     : id id id id id int            { MkMaterial $1 $2 $3 $4 $5 $6 }
 
 Shapes :: { [Shape] }
-    : shapes ListOfShapes           { $2 }
+    : shapes ListOfShapes           { reverse $2 }
 
 ListOfShapes  :: { [Shape] }
     : ListOfShapes Shape            { $2 : $1 }
     |                               { [] }
 
 Shape :: { Shape }
-    : poly id id id                 { MkPoly $2 $3 $4 }
-    | sphere id FloatOrInt          { MkSphere $2 $3 }
+    : poly id Ids                   { MkPoly $2 (reverse $3) }
+    | sphere id id FloatOrInt       { MkSphere $2 $3 $4 }
+
+Ids :: { [String] }
+    : Ids id                        { $2 : $1 }
+    |                               { [] }
 
 Light :: { Light }
     : light id id                   { MkLight $2 $3 }
 
-Camera
+Camera :: { Camera }
     : camera id id id               { MkCamera $2 $3 $4 }
 
 {
@@ -91,8 +96,8 @@ data Color = MkColor String Double Double Double
 data Material = MkMaterial String String String String String Int
 
 data Shape 
-    = MkPoly String String String
-    | MkSphere String Double
+    = MkPoly String [String]
+    | MkSphere String String Double
 
 data Light = MkLight String String
 
@@ -106,8 +111,33 @@ data Block
     | Light Light
     | Camera Camera
 
-happyError = error "parse error"
+instance Show Vertex where
+    show (MkVertex a b c d) = a ++ " " ++ intercalate " " (map show [b, c, d])
 
-failUnless b msg = if b then () else error msg
+instance Show Color where
+    show (MkColor a b c d) = a ++ " " ++ intercalate " " (map show [b, c, d])
+
+instance Show Material where
+    show (MkMaterial a b c d e f) = intercalate " " [a, b, c, d, e, show f]
+
+instance Show Shape where
+    show (MkPoly m vs) = "poly " ++ m ++ " " ++ intercalate " " vs
+    show (MkSphere m a b) = "sphere " ++ m ++ " " ++ a ++ " " ++ show b
+
+instance Show Light where
+    show (MkLight a b) = a ++ " " ++ b
+
+instance Show Camera where
+    show (MkCamera a b c) = a ++ " " ++ b ++ " " ++ c
+
+instance Show Block where
+    show (Vertices vs)  = concat ("vertices\n" : map (\v -> "   " ++ show v ++ "\n") vs)
+    show (Colors cs)    = concat ("colors\n" : map (\c -> "   " ++ show c ++ "\n") cs)
+    show (Materials ms) = concat ("materials\n" : map (\m -> "   " ++ show m ++ "\n") ms)
+    show (Shapes ss)    = concat ("shapes\n" : map (\s -> "   " ++ show s ++ "\n") ss)
+    show (Light l)      = "light " ++ show l ++ "\n"
+    show (Camera c)     = "camera " ++ show c ++ "\n"
+
+happyError a = error $ "parse error: " ++ show a
 
 }

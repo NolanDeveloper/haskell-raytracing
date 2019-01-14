@@ -18,8 +18,8 @@ materials
     fully_red red red red red 100
 
 shapes
-    poly      a b c d
-    sphere    e 3.5
+    poly      fully_red a b c d
+    sphere    fully_red e 3.5
 
 vertices
     lightPosition -3 7 0
