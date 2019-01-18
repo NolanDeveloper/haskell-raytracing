@@ -9,7 +9,6 @@ import Control.Monad
 
 import Raytracer
 import Types
-import Scene
 
 import Linear
 import Codec.Picture
@@ -120,9 +119,6 @@ main :: IO ()
 main = do
     Arguments{..} <- parseArguments
     content <- readFile sceneFile
-    let Right tokens = tokenize content
-    forM_ (parse tokens) print
-    --scene <- either error id <$> parseSceneFromFile sceneFile
-    ----let scene = Scene objects defaultLightSources 
-    --let image = render defaultCamera scene width height
-    --writePng outputFile image
+    let scene = either error id (parseScene content)
+    let image = render defaultCamera scene width height
+    writePng outputFile image

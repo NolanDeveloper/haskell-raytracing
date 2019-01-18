@@ -1,5 +1,5 @@
 {
-module SceneLexer(Token(..), tokenize) where
+module SceneLexer( Token(..), tokenize ) where
 
 import Data.Maybe
 import Text.Read

@@ -32,7 +32,7 @@ traceRay scene@(Scene objects lightSources) depth ray@(Ray src dir) =
             , all (not . intersects fragmentPosition lightPosition)
                   [cast object (Ray fragmentPosition lm) | object <- objects]
             , let hm = normalize (lm - dir)
-            , let i = c ^* (10 / norm (lightPosition - fragmentPosition))
+            , let i = c -- ^* (40 / norm (lightPosition - fragmentPosition))
             ]
       where
         intersects _ _ Nothing = False
