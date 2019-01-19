@@ -1,0 +1,63 @@
+colors
+    black   0.0 0.0 0.0
+
+    white   1.0 1.0 1.0
+    orange  1.0 0.5 0.0
+    red     1.0 0.0 0.0
+    green   0.0 1.0 0.0
+    blue    0.0 0.0 1.0
+
+    grey    0.5 0.5  0.5
+    dorange 0.5 0.25 0.0
+    dred    0.5 0.0  0.0
+    dgreen  0.0 0.5  0.0
+    dblue   0.0 0.0  0.5
+
+vertices
+    l1      8   8   -10
+    l2     -9  -9   -13
+    l3      1  -2   -12
+    l4     -2   1   -12
+    l5     -2  -2    -9
+    l6      9  -9   -17
+
+light l1 grey
+light l2 dorange
+light l3 dred
+light l4 dgreen
+light l5 dblue
+light l6 dblue
+
+vertices
+    f1       10  10 -20
+    f2       10 -10 -20
+    f3      -10 -10 -20
+    f4      -10  10 -20
+    b1       10  10  20
+    b2       10 -10  20
+    b3      -10 -10  20
+    b4      -10  10  20
+
+materials
+    #       ks      kd      ka      kr      specular
+    msphere black   white   black   grey    100
+    mwall   black   grey    black   black   100
+
+vertices
+	s1		-5   -6 -16
+	s2		 5   -4 -16
+	s3		 0   -8 -12
+	s4		-4 -8.5 -11
+
+shapes
+    sphere  msphere s1 4
+    sphere  msphere s2 5
+    sphere  msphere s3 2
+    sphere  msphere s4 1.5
+    poly    mwall f4 f3 f2 f1 # front
+    poly    mwall f1 f2 b2 b1 # right
+    poly    mwall f2 f3 b3 b2 # bottom
+    poly    mwall f3 f4 b4 b3 # left
+    poly    mwall f4 f1 b1 b4 # top
+    poly    mwall b1 b2 b3 b4 # back
+

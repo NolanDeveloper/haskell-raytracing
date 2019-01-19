@@ -2,8 +2,8 @@
 
 ```
 stack build
-stack exec haskell-raytracing 200 200 output.png
+stack exec render 100 100 output.png simple.scene
 # теперь в папке с проектом появился рисунок output.png
 ```
 
-![](picture.png)
+![](old.png)

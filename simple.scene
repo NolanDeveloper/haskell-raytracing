@@ -30,11 +30,11 @@ materials
     soft_light_grey black light_grey light_grey black 20
 
 shapes
-    poly      mwhite front1 front2 front3 front4       # front
-    poly      mblue front3 back3 back4 front4          # bottom
-    poly      soft_light_grey front1 front2 back2 back1     # top
-    poly      mgreen front1 front4 back4 back1         # left
-    poly      mred front2 front3 back3 back2           # right
+    poly      mwhite front1 front2 front3 front4        # front
+    poly      mblue front3 back3 back4 front4           # bottom
+    poly      soft_light_grey front1 front2 back2 back1 # top
+    poly      mgreen front1 front4 back4 back1          # left
+    poly      mred front2 front3 back3 back2            # right
     sphere    mred e 3.5
 
 vertices
